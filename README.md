@@ -1,7 +1,7 @@
 # Color Based Multi Person Id Tracker
 
 <p align="center">
-    <img src="https://j.gifs.com/91zKxB.gif", width="480">
+    <img src="https://j.gifs.com/xn03Oq.gif">
 </p>
 
 See more at https://youtu.be/pmNdMfkwc44
