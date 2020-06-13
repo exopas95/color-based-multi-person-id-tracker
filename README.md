@@ -1,8 +1,6 @@
 # Color Based Multi Person Id Tracker
 
-<p align="center">
-    <img src="https://j.gifs.com/xn03Oq.gif" width="800", height="400">
-</p>
+[![IMAGE ALT TEXT HERE](https://user-images.githubusercontent.com/38775259/84578290-edbb6080-adfe-11ea-8a61-f53a347d6940.jpg)](https://www.youtube.com/watch?v=pmNdMfkwc44)
 
 See more at https://youtu.be/pmNdMfkwc44
 
