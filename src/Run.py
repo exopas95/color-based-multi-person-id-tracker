@@ -8,12 +8,14 @@ import Constants
 import pygame
 import cv2
 
+
 class Main():
 
     def __init__(self):
         self.input = Input()
         pygame.init()
-        pygame.display.set_mode((Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
+        pygame.display.set_mode(
+            (Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
         pygame.display.set_caption("color-based-multi-person-id-tracker")
         screen = pygame.display.get_surface()
         self.output = Output(screen, self.input)
@@ -25,12 +27,12 @@ class Main():
         p_x1 = 1050
         p_x2 = 1500
         while True:
-            p_x1, p_x2, color_list = self.input.run(person, color_list, group_num, p_x1, p_x2)
+            p_x1, p_x2, color_list = self.input.run(
+                person, color_list, group_num, p_x1, p_x2)
             self.ouput.run(p_x1, p_x2)
         self.capture.release()
         self.out.release()
         cv2.destroyAllWindows()
-
 
 
 if __name__ == "__main__":
