@@ -63,8 +63,7 @@ class Input():
             "cosine", max_cosine_distance, nn_budget)
         self.tracker = DeepTracker(metric, max_age=max_age, n_init=n_init)
 
-        self.capture = cv2.VideoCapture(
-            "/home/treenulbo/Develop/live-dance-tracker/youtube_example/BTS_GO.mp4")
+        self.capture = cv2.VideoCapture("input_video.mp4")
 
         if self.capture.isOpened():         # Checks the stream
             self.frameSize = (int(self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)),
@@ -75,7 +74,7 @@ class Input():
 
         # Write video
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-        self.out = cv2.VideoWriter('dance_tracker_person_1.avi', fourcc,
+        self.out = cv2.VideoWriter('result.avi', fourcc,
                                    30.0, (Constants.SCREEN_WIDTH, Constants.SCREEN_HEIGHT))
 
     def getCurrentFrameAsImage(self, p_x1, p_x2):
@@ -130,7 +129,7 @@ class Input():
         # average = color_image.mean(axis=0).mean(axis=0)
 
         hist = self.centroid_histogram(clt)
-        bar = self.plot_colors(hist, clt.cluster_centers_)
+        #bar = self.plot_colors(hist, clt.cluster_centers_)
         cmax = np.max(hist)
         cmax_index = np.where(cmax == hist)
         d_color = np.round(clt.cluster_centers_[cmax_index], decimals=0)
@@ -184,7 +183,7 @@ class Input():
         return euclidean_d
 
     def run(self, p_id, col_list, g_num, start, end):
-        result, self.currentFrame = self.capture.read()
+        self.currentFrame = self.capture.read()
 
         # frame width
         width_start = 0
@@ -216,52 +215,57 @@ class Input():
         def nonempty(xywh): return xywh[2] != 0 and xywh[3] != 0
         detections = [Detection(bbox, 1.0, feature, pose) for bbox, feature, pose in zip(
             boxesxywh, features, poses) if nonempty(bbox)]
+
         # Run non-maxima suppression.
         boxes_det = np.array([d.tlwh for d in detections])
         scores = np.array([d.confidence for d in detections])
         indices = preprocessing.non_max_suppression(
             boxes_det, self.nms_max_overlap, scores)
         detections = [detections[i] for i in indices]
+
         # Call the tracker
         self.tracker.predict()
         self.tracker.update(self.currentFrame, detections)
         track_list = self.tracker.tracks
 
+        # For individual tracker
         for track in track_list:
             color = None
+            # If tracker is not working properly
             if not track.is_confirmed():
                 color = [0, 0, 255]
+            # If tracker is working properly
             else:
                 color = [255, 255, 255]
             bbox = track.to_tlbr()
 
             # DeepGaze color detection
-            person_key = int(track.track_id)    # Personal Id
+            person_key = int(track.track_id)                      # Personal Id
             obj_box = [int(bbox[0]), int(bbox[1]), int(bbox[2]),
-                       int(bbox[3])]  # object tracker cordinates
+                       int(bbox[3])]                              # object tracker cordinates
             col_box = [int(bbox[0])-2, int(bbox[1])+2, int(bbox[2])+2, int(bbox[1])+2 - int(
-                (int(bbox[1]) + 2 - int(bbox[3])) * 0.6)]  # color tracker cordinates
+                (int(bbox[1]) + 2 - int(bbox[3])) * 0.6)]         # color tracker cordinates
 
-            clear_condition = False  # 박스가 일정 크기 이상
-            color_detected = True   # 색깔 발견
+            clear_condition = False      # check object detection is available
+            color_detected = True        # check color detection is available
+
+            # If Box is big enough to properly track objects
             if (col_box[2] - col_box[0]) < 200 and (col_box[2] - col_box[0]) > 80 and (col_box[3] - col_box[1]) > 130:
                 clear_condition = True
 
             try:
-                template = self.currentFrame[col_box[1]                                             :col_box[3], col_box[0]:col_box[2]]
+                template = self.currentFrame[col_box[1]:col_box[3], col_box[0]:col_box[2]]
                 # Defining the deepgaze color detector object
                 my_back_detector = BackProjectionColorDetector()
                 my_back_detector.setTemplate(template)  # Set the template
-                #image_filtered = my_back_detector.returnFiltered(self.currentFrame, morph_opening=True, blur=True, kernel_size=7, iterations=2)
+                # image_filtered = my_back_detector.returnFiltered(self.currentFrame, morph_opening=True, blur=True, kernel_size=7, iterations=2)
 
-                # 색깔 고정해주기
                 if clear_condition == True:
                     dominant_color = self.image_color_cluster(
                         template, person_key)
                     if len(col_list) == 0:
                         col_list[person_key] = dominant_color
                     elif person_key in list(col_list.keys()):
-                        # 안가려져있을때
                         if self.color_distance(dominant_color, col_list[person_key]) < 5:
                             col_list[person_key] = dominant_color
                         else:
@@ -279,7 +283,6 @@ class Input():
             except:
                 color_detected = False
 
-            # 안가려져있을 때
             if person_key > g_num:
                 if color_detected == False:
                     dominant_color = [255, 255, 255]
@@ -323,7 +326,7 @@ class Input():
         #json.dump(personal_info, codecs.open("../../dance-result/temp/Gashina3_{}.json".format(current_time), 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True, indent=2)
 
         # print("Cordinate: ({}, {})".format(width_start, width_end))
-        current_time = datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')
+        #current_time = datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')
         cv2.waitKey(1)
 
         return width_start, width_end, col_list
